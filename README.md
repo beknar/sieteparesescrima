@@ -93,21 +93,54 @@ Verified: content bodies are byte-identical to the live wiki, all 27 CSS-
 referenced skin assets load, the logo is byte-for-byte the live file, and every
 local reference resolves (0 missing of 1046).
 
-### What does not work, by design
+### Wiki controls removed
 
-The Vector chrome is preserved intact, so it still *renders* the wiki controls,
-but they need a backend and therefore do nothing: the **Edit** and **View
-history** tabs, the search box, **Log in**, and the sidebar's *Recent changes*,
-*Random page* and *Special pages*. The footer's *Privacy policy*, *About* and
-*General disclaimer* links were already redlinks on the live wiki.
+Everything that needed MediaWiki behind it is **removed from the markup**, not
+hidden with CSS, so it is genuinely gone and costs nothing to download:
 
-Two genuine losses versus the wiki: full-text search (the box needs a backend —
-a small JS index over 12 pages would replace it) and browser-based editing.
+| Area | Removed |
+|---|---|
+| Tab strip | Read, Edit, Edit source, View history (`p-views`) |
+| | Page, Discussion (`p-namespaces`) |
+| Top right | Not logged in, Talk, Contributions, Log in (`p-personal`) |
+| | The search box (`p-search`) |
+| Sidebar | Recent changes, Random page, Help about MediaWiki |
+| | The whole **Tools** portlet (`p-tb`) |
+| Footer | Privacy policy, About, Disclaimers (`footer-places`) |
+| | Powered by MediaWiki (`footer-icons`) |
+| Content | The `[edit]` / `[edit source]` links beside headings |
+
+What remains: the logo, the 12 site navigation links, the page content, and the
+footer's "This page was last edited on ..." line. Pages are about 40% smaller
+than the raw export.
+
+Two consequences worth stating plainly: there is **no search** (a small JS index
+over 12 pages would restore it) and **no browser editing** — the wiki averaged
+one edit every two years, so neither was in real use.
+
+The one piece of old UI left is on the 24 `File:` description pages, where the
+upload history credits `Beknar` with `talk` and `contribs` links. Those are
+redlinks pointing at user pages that were never created.
+
+### Accessibility note
+
+Vector emits two screen-reader skip links. "Jump to search" was removed with the
+search box it targeted. "Jump to navigation" pointed at `#mw-head`, which is
+empty now that its portlets are gone, so the build repoints it at `#mw-panel`
+where the navigation actually lives — rather than dropping it and losing the
+affordance.
 
 ### Gotcha worth remembering
 
 The CSS bundles come straight off `load.php`, so their internal `url()` values
 are absolute (`/skins/...`) or root-relative (`resources/...`). Both 404 when
-served as plain files — which silently removes the logo, the search icon,
-sidebar bullets, tab fades, arrows and the thumbnail magnify icons. Rewriting
-the HTML alone is not enough; `build-static.py` rewrites the stylesheets too.
+served as plain files — which silently removes the logo, sidebar bullets, tab
+fades, arrows and the thumbnail magnify icons. Rewriting the HTML alone is not
+enough; `build-static.py` rewrites the stylesheets too.
+
+`srcset` needs the same treatment as `src`, and is easy to miss: a responsive
+image can keep working off its `src` while every `srcset` candidate 404s.
+
+The section edit links carry no `id` and nest spans inside for the `[` `]`
+brackets, so a flat regex stops at the first `</span>` and leaves stray
+brackets beside the headings. The build removes them depth-aware.

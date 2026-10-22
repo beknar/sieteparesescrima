@@ -57,6 +57,129 @@ def build_page_map(titles):
     return m
 
 
+# Wiki controls that cannot work without MediaWiki behind them. Removed from
+# the markup rather than hidden with CSS, so they are genuinely gone and cost
+# nothing to download.
+REMOVE_IDS = [
+    # the whole Views tab strip: Read / Edit / Edit source / View history
+    "p-views",
+    # top-right personal tools: "Not logged in" / Talk / Contributions / Log in
+    "p-personal",
+    # the sidebar Tools portlet: What links here, Related changes, Special
+    # pages, Printable version, Permanent link, Page information
+    "p-tb",
+    # the Page / Discussion namespace tabs
+    "p-namespaces",
+    # the search box — it needs a search backend to do anything
+    "p-search",
+    # the "Powered by MediaWiki" footer badge and its link
+    "footer-icons",
+    # footer links, all three of which were redlinks on the live wiki anyway:
+    # Privacy policy, About Siete Pares Escrima, Disclaimers. The whole <ul>
+    # goes, since removing its three items would leave an empty list.
+    "footer-places",
+    # three wiki links at the end of the Navigation portlet. The other 12
+    # entries are this site's own nav (Creed, Sinawali, Grandmasters, ...) and
+    # must survive, so these go individually rather than by removing p-navigation.
+    "n-recentchanges",
+    "n-randompage",
+    "n-help-mediawiki",
+]
+
+
+def remove_element(doc, elem_id):
+    """Drop the element carrying id="elem_id", including its children.
+
+    MediaWiki's output is well-formed, so matching the element's own tag name
+    while tracking nesting depth is reliable here and avoids a parser
+    dependency (bs4/lxml are not installed on this host).
+    """
+    m = re.search(r'<(\w+)([^>]*\sid="%s")' % re.escape(elem_id), doc)
+    if not m:
+        return doc, False
+    tag = m.group(1)
+    start = m.start()
+
+    # self-closing / void element
+    open_end = doc.index(">", m.end() - 1)
+    if doc[open_end - 1] == "/":
+        return doc[:start] + doc[open_end + 1:], True
+
+    depth = 0
+    pos = start
+    pat = re.compile(r"<(/?)%s\b" % re.escape(tag), re.I)
+    while True:
+        mm = pat.search(doc, pos)
+        if not mm:
+            return doc, False
+        if mm.group(1):
+            depth -= 1
+            if depth == 0:
+                end = doc.index(">", mm.end()) + 1
+                return doc[:start] + doc[end:], True
+        else:
+            depth += 1
+        pos = mm.end()
+
+
+def remove_by_class(doc, tag, cls):
+    """Remove every <tag class="...cls..."> element, children included.
+
+    Used for the section edit links, which carry no id and nest further spans
+    inside (the [ ] brackets), so a flat regex would stop at the first
+    </span> and leave the brackets stranded.
+    """
+    pat = re.compile(r'<%s\b[^>]*class="[^"]*\b%s\b[^"]*"' % (re.escape(tag), re.escape(cls)))
+    nest = re.compile(r"<(/?)%s\b" % re.escape(tag), re.I)
+    removed = 0
+    while True:
+        m = pat.search(doc)
+        if not m:
+            return doc, removed
+        depth, pos = 0, m.start()
+        while True:
+            mm = nest.search(doc, pos)
+            if not mm:
+                return doc, removed          # malformed; leave the rest alone
+            if mm.group(1):
+                depth -= 1
+                if depth == 0:
+                    end = doc.index(">", mm.end()) + 1
+                    doc = doc[:m.start()] + doc[end:]
+                    removed += 1
+                    break
+            else:
+                depth += 1
+            pos = mm.end()
+
+
+def strip_wiki_controls(doc):
+    for elem_id in REMOVE_IDS:
+        doc, hit = remove_element(doc, elem_id)
+        counts["removed " + elem_id if hit else "MISSING " + elem_id] += 1
+
+    # The [edit] / [edit source] links beside headings. These sit in the page
+    # content rather than the chrome, which is why removing the tab strip left
+    # them behind.
+    doc, n = remove_by_class(doc, "span", "mw-editsection")
+    if n:
+        counts["removed section edit links"] += n
+
+    # Vector emits two screen-reader skip links. "Jump to search" now points at
+    # a target that no longer exists, so it goes with the search box. "Jump to
+    # navigation" aimed at #mw-head, which is empty now that its portlets are
+    # gone, so repoint it at the sidebar where the nav actually lives.
+    doc, hit = re.subn(
+        r'<a class="mw-jump-link" href="#searchInput">[^<]*</a>\s*', "", doc)
+    if hit:
+        counts["removed jump-to-search link"] += hit
+    doc, hit = re.subn(
+        r'(<a class="mw-jump-link" href=")#mw-head(">)', r"\1#mw-panel\2", doc)
+    if hit:
+        counts["retargeted jump-to-nav link"] += hit
+    return doc
+
+
 def rewrite(doc, page_map, asset_map):
     # --- load.php bundles (longest first, they share a prefix) ---
     for url in sorted(asset_map, key=len, reverse=True):
@@ -79,15 +202,24 @@ def rewrite(doc, page_map, asset_map):
 
     doc = re.sub(r'(src|srcset|href)="(/images/[^"]*)"', image_ref, doc)
 
-    # srcset carries several comma-separated candidates
+    # srcset carries several comma-separated candidates, each "url 1.5x".
+    # It needs the same treatment as src: uploads become relative, while skin
+    # and resource paths move under static/.
     def srcset(m):
         parts = []
         for cand in m.group(2).split(","):
             cand = cand.strip()
-            if cand.startswith("/images/"):
+            if not cand:
+                continue
+            bits = cand.split(None, 1)
+            url, suffix = bits[0], (" " + bits[1] if len(bits) > 1 else "")
+            if url.startswith("/images/"):
                 counts["image"] += 1
-                cand = cand.lstrip("/")
-            parts.append(cand)
+                url = url.lstrip("/")
+            elif url.startswith(("/skins/", "/resources/", "/extensions/")):
+                counts["static asset"] += 1
+                url = "static" + url.split("?")[0]
+            parts.append(url + suffix)
         return 'srcset="%s"' % ", ".join(parts)
 
     doc = re.sub(r'(srcset)="([^"]*)"', srcset, doc)
@@ -97,6 +229,13 @@ def rewrite(doc, page_map, asset_map):
         if url in doc:
             doc = doc.replace('"%s"' % url, '"%s"' % page_map[url])
             counts["page link"] += 1
+
+    # --- drop the wiki controls, then pull the header up into the space they left ---
+    doc = strip_wiki_controls(doc)
+    doc = doc.replace(
+        "</head>",
+        '<link rel="stylesheet" href="assets/static-site.css"></head>', 1)
+    counts["override css linked"] += 1
 
     # --- things that cannot work without a backend ---
     # the live wiki 404s on /favicon.ico too, so drop the link rather than

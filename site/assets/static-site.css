@@ -1,0 +1,35 @@
+/* Static-site adjustments for the Siete Pares Escrima export.
+ *
+ * The wiki controls that need a backend are removed from the markup by
+ * tools/build-static.py, not hidden here. This sheet only reclaims the space
+ * they used to occupy, so the header does not carry an empty band.
+ *
+ * Vector reserves a 5em strip at the top of the content column
+ * (#mw-head-base) for two rows: the personal tools (Not logged in / Talk /
+ * Contributions / Log in) above, and the tab strip with the search box below.
+ * Every occupant of both rows is now gone, so the strip is pure empty space
+ * and collapses to nothing, letting the content start level with the logo.
+ */
+
+#mw-head-base {
+	margin-top: 0;
+	height: 0;
+}
+
+/* Both nav containers are empty now; drop the offsets that positioned the
+   tab row so they cannot reintroduce blank space. */
+#left-navigation,
+#right-navigation {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+/* The leftover "More" (#p-cactions) and language-variants (#p-variants)
+   dropdowns need no handling here: MediaWiki already tags them
+   .emptyPortlet, and Vector's own CSS sets that to display:none. */
+
+/* Vector draws the sidebar's first portlet heading tight under the logo on the
+   assumption the tab row sits lower. Nudge it back now the header is shorter. */
+#mw-panel #p-navigation {
+	margin-top: 0.5em;
+}
