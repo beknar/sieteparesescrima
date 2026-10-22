@@ -1,0 +1,7 @@
+# Nothing in this repo may contain credentials or personal data.
+# These are produced locally by the export but must never be published:
+db/mediawiki-schema-and-content.sql     # would contain user password hashes + emails
+db/*full*.sql
+config/LocalSettings.php                # $wgDBpassword, $wgSecretKey, $wgUpgradeKey
+config/LocalSettings*.php
+*.sql.gz

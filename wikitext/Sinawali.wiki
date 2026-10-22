@@ -1,0 +1,9 @@
+<div id="BackToTop"  class="noprint" style="background-color:#DDEFDD; position:fixed;
+ bottom:32px; left:2%; z-index:9999; padding:0; margin:0;"><span style="color:blue;
+ font-size:8pt; font-face:verdana,sans-serif;  border:0.2em outset #ceebf7;
+ padding:0.1em; font-weight:bolder; -moz-border-radius:8px; ">
+[[#top| Back to the Top ]]</span></div>
+
+Pampanga, an area that once encompassed a large portion of the Central Luzon Plain of the Phillippines, has always prided itself of its renowned leaders and heroes, the courage, skill and loyalty of its warriors, and its fighting art known as Sinawali (literal translation: wove), a proven combat art noted for its advanced and double weapon system but also includes the use of single weapons, knives and the long pole or pingga. The present borders of Pampanga were established in 1873 after various sections of the old Pampanga region were subtracted and incorproated into the provinces of Bulacan, Nueva Ecija, Bataan and Tarlac.
+
+The highly advanced method of double weapon fighting art unique to this area has been variously attributed to Malay, Chinese, Japanese and Muslim influences.&amp;amp;nbsp; Historically, any or all of the mentioned sources could be traced, studied and verified.

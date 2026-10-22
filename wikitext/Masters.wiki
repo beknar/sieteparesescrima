@@ -1,0 +1,13 @@
+<div id="BackToTop"  class="noprint" style="background-color:#DDEFDD; position:fixed;
+ bottom:32px; left:2%; z-index:9999; padding:0; margin:0;"><span style="color:blue;
+ font-size:8pt; font-face:verdana,sans-serif;  border:0.2em outset #ceebf7;
+ padding:0.1em; font-weight:bolder; -moz-border-radius:8px; ">
+[[#top| Back to the Top ]]</span></div>
+
+Note: Pictures for Jose Roger, Bobby Cruz, Antonio Aquino and Scott Viera are not yet available.
+
+[[File:Eric buenaflor.jpg|left|thumb|Master Eric Buenaflor]]
+[[File:Jerry dequitos r1.jpg|thumb|Master Jerry Dequitos|center|665x665px]]
+[[File:Dave modzak master.jpg|left|thumb|Master Dave Modzak]]
+
+[[File:Master lito san pedro.jpg|thumb|Master Lito San Pedro|center]]

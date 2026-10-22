@@ -1,0 +1,13 @@
+sitename=Siete Pares Escrima
+mediawiki_version=1.35.2
+server=http://home.sieteparesescrima.com
+language=en
+db_engine=MariaDB 10.3.39
+php_at_export=7.4.3-4ubuntu2.29+esm5
+exported=2026-10-21
+pages=38
+content_pages=12
+uploads=24
+revisions=39
+first_edit=2022-04-30
+last_edit=2026-09-08
