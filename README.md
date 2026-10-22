@@ -21,6 +21,8 @@ preserves everything it held so the content can outlive the software.
 | `db/content-tables.sql` | Content tables only — no users, no credentials |
 | `config/settings-nonsecret.txt` | Non-secret `LocalSettings.php` values |
 | `meta/` | Page list, upload inventory, extensions, skins, site info |
+| `site/` | **Working static site** — open `site/index.html` |
+| `tools/build-static.py` | Rebuilds `site/` from `html/` (URL rewrites only) |
 
 ## Content
 
@@ -73,3 +75,39 @@ Users are not restored — recreate the two accounts by hand.
 Exported from MediaWiki 1.35.2 on MariaDB 10.3.39 and PHP
 7.4.3-4ubuntu2.29+esm5 (Ubuntu 20.04). Produced with `dumpBackup.php`,
 `getText.php`, `mysqldump` and HTTP renders of the live site.
+
+## The static site (`site/`)
+
+A self-contained static copy that is meant to look identical to the live wiki.
+It is the exported Vector-skinned HTML with URLs rewritten — the markup and the
+skin are untouched, which is what preserves the appearance.
+
+```bash
+python3 tools/build-static.py          # rebuild site/ from html/
+cd site && python3 -m http.server 8088 # then open http://localhost:8088/
+```
+
+The build is idempotent, so re-running it is safe.
+
+Verified: content bodies are byte-identical to the live wiki, all 27 CSS-
+referenced skin assets load, the logo is byte-for-byte the live file, and every
+local reference resolves (0 missing of 1046).
+
+### What does not work, by design
+
+The Vector chrome is preserved intact, so it still *renders* the wiki controls,
+but they need a backend and therefore do nothing: the **Edit** and **View
+history** tabs, the search box, **Log in**, and the sidebar's *Recent changes*,
+*Random page* and *Special pages*. The footer's *Privacy policy*, *About* and
+*General disclaimer* links were already redlinks on the live wiki.
+
+Two genuine losses versus the wiki: full-text search (the box needs a backend —
+a small JS index over 12 pages would replace it) and browser-based editing.
+
+### Gotcha worth remembering
+
+The CSS bundles come straight off `load.php`, so their internal `url()` values
+are absolute (`/skins/...`) or root-relative (`resources/...`). Both 404 when
+served as plain files — which silently removes the logo, the search icon,
+sidebar bullets, tab fades, arrows and the thumbnail magnify icons. Rewriting
+the HTML alone is not enough; `build-static.py` rewrites the stylesheets too.

@@ -1,0 +1,3 @@
+/load.php?lang=en&modules=ext.visualEditor.desktopArticleTarget.noscript%7Cfilepage%7Cmediawiki.action.view.filepage%7Cskins.vector.styles.legacy&only=styles&skin=vector	assets/bundle-1.css
+/load.php?lang=en&modules=ext.visualEditor.desktopArticleTarget.noscript%7Cskins.vector.styles.legacy&only=styles&skin=vector	assets/bundle-2.css
+/load.php?lang=en&modules=startup&only=scripts&raw=1&skin=vector	assets/bundle-3.js
