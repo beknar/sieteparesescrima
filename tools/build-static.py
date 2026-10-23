@@ -165,6 +165,16 @@ def strip_wiki_controls(doc):
     if n:
         counts["removed section edit links"] += n
 
+    # MediaWiki's print-only "Retrieved from <url>" line. It is display:none on
+    # screen, which is why it survived every visual check, but it carries an
+    # absolute http:// link to an index.php URL that no longer exists -- so on
+    # an HTTPS site it is both a dead link and the page's only mixed-content
+    # reference. There is no live wiki to retrieve the page from any more, so
+    # the whole line goes rather than being rewritten.
+    doc, n = remove_by_class(doc, "div", "printfooter")
+    if n:
+        counts["removed print footer"] += n
+
     # Vector emits two screen-reader skip links. "Jump to search" now points at
     # a target that no longer exists, so it goes with the search box. "Jump to
     # navigation" aimed at #mw-head, which is empty now that its portlets are
