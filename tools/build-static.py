@@ -248,11 +248,41 @@ def rewrite(doc, page_map, asset_map):
     counts["override css linked"] += 1
 
     # --- things that cannot work without a backend ---
-    # the live wiki 404s on /favicon.ico too, so drop the link rather than
-    # leave a reference to a file that does not exist
+    # drop the wiki's favicon link: it pointed at the wiki's own path. The
+    # icon now lives at site/favicon.ico (the crest, added 2026-11-12), the
+    # root path browsers request by default, so no link is needed
     doc = re.sub(r'<link[^>]*favicon[^>]*>', "", doc)
     doc = re.sub(r'<link[^>]*(?:opensearch_desc\.php|action=rsd)[^>]*>', "", doc)
     counts["stripped backend link"] += 1
+    # <head>'s rel="edit" and application/x-wiki links point at ?action=edit,
+    # which has nothing behind it here (crawlers follow them and get 404s)
+    doc, n = re.subn(r'<link[^>]*action=edit[^>]*>', "", doc)
+    counts["stripped edit link"] += n
+    # the Recent changes Atom feed needs index.php too; and the generator tag
+    # advertises a MediaWiki version that no longer runs here, which only
+    # invites scanners to try its exploits
+    doc, n = re.subn(r'<link rel="alternate" type="application/atom\+xml"[^>]*>', "", doc)
+    counts["stripped feed link"] += n
+    doc, n = re.subn(r'<meta name="generator" content="MediaWiki[^"]*"/>', "", doc)
+    counts["stripped generator tag"] += n
+
+    # File: pages credit the uploader as "Beknar (talk | contribs)": three
+    # redlinks to user pages that were never created. Keep the name as text.
+    doc, n = re.subn(r'<a [^>]*class="new mw-userlink"[^>]*>(<bdi>.*?</bdi>)</a>', r"\1", doc)
+    counts["unlinked uploader"] += n
+    doc, n = re.subn(r'<span style="white-space: nowrap;"> <span class="mw-usertoollinks">.*?</span></span>', "", doc)
+    counts["removed talk/contribs links"] += n
+
+    # ResourceLoader. bundle-3.js is its startup module, which only asks
+    # load.php for the rest of the page's JS: every one of those requests
+    # 404s here and the browser logs errors. Vector renders fine without JS,
+    # so drop the loader and the inline RLCONF/RLQ scripts that feed it. The
+    # first of those is also what flips <html> from client-nojs to client-js;
+    # without it the page stays client-nojs, which matches having no JS.
+    doc, n = re.subn(r'<script async="" src="assets/bundle-3\.js"></script>', "", doc)
+    counts["removed ResourceLoader startup"] += n
+    doc, n = re.subn(r'<script>(?:(?!</script>).)*?\b(?:RLCONF|RLQ)\b.*?</script>', "", doc, flags=re.S)
+    counts["removed ResourceLoader inline scripts"] += n
 
     return doc
 
