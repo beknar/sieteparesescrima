@@ -33,3 +33,10 @@
 #mw-panel #p-navigation {
 	margin-top: 0.5em;
 }
+
+/* The File: pages' metadata table. MediaWiki's JS hid the rarer EXIF rows and
+   added a "Show extended details" toggle; with the JS gone, keep them hidden so
+   the table matches what the wiki showed by default. */
+.mw_metadata.collapsed .mw-metadata-collapsible {
+	display: none;
+}
