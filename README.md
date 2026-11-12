@@ -109,6 +109,9 @@ hidden with CSS, so it is genuinely gone and costs nothing to download:
 | Footer | Privacy policy, About, Disclaimers (`footer-places`) |
 | | Powered by MediaWiki (`footer-icons`) |
 | Content | The `[edit]` / `[edit source]` links beside headings |
+| | On the 24 `File:` pages, the uploader's `talk` / `contribs` redlinks (the name `Beknar` stays, as text) |
+| `<head>` | The `rel="edit"` / `application/x-wiki` links, the Recent changes Atom feed, and the `MediaWiki 1.35.2` generator tag |
+| Scripts | ResourceLoader: the startup module (`assets/bundle-3.js`) and the inline `RLCONF` / `RLQ` scripts |
 
 What remains: the logo, the 12 site navigation links, the page content, and the
 footer's "This page was last edited on ..." line. Pages are about 40% smaller
@@ -118,9 +121,20 @@ Two consequences worth stating plainly: there is **no search** (a small JS index
 over 12 pages would restore it) and **no browser editing** — the wiki averaged
 one edit every two years, so neither was in real use.
 
-The one piece of old UI left is on the 24 `File:` description pages, where the
-upload history credits `Beknar` with `talk` and `contribs` links. Those are
-redlinks pointing at user pages that were never created.
+No old wiki UI is left (2026-11-12): a crawl of the live site finds no broken
+links.
+
+### Why the scripts went
+
+ResourceLoader's startup module exists only to ask `load.php` for the rest of
+a page's JavaScript, so on a static host every page logged a string of 404s.
+Vector renders without JavaScript, and nothing on these pages needs it, so the
+build drops the loader and its inline scripts. The first inline script is also
+what switches `<html>` from `client-nojs` to `client-js`; with it gone, the
+pages stay `client-nojs`, which is accurate. The one visible side effect is on
+the `File:` pages, where MediaWiki's JS collapsed the rarer EXIF rows;
+`static-site.css` keeps them collapsed. `assets/bundle-3.js` is left in
+`site/assets/` but nothing references it.
 
 ### Accessibility note
 
